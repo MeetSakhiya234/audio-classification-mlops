@@ -47,3 +47,8 @@ coverage.xml
 # Temporary files
 *.tmp
 *.temp
+
+# Local audio test files
+*.wav
+*.mp3
+*.flac

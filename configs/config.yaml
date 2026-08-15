@@ -1,0 +1,19 @@
+project:
+  name: audio-classification-mlops
+  task: speech_command_classification
+  num_classes: 12
+  sample_rate: 16000
+
+model:
+  name: superb/wav2vec2-base-superb-ks
+
+data:
+  dataset: google/speech_commands
+  revision: a751309c0fd613e8a5d30d77900f30e8b42bc2da
+
+training:
+  max_samples: 2000
+  validation_samples: 400
+
+optimization:
+  metric: macro_f1
