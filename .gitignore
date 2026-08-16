@@ -52,3 +52,4 @@ coverage.xml
 *.wav
 *.mp3
 *.flac
+.zen/
