@@ -57,3 +57,38 @@ def prepare_audio(audio_path: str):
     )
 
     return tensor.unsqueeze(0)
+
+
+import io
+import soundfile as sf
+
+
+def prepare_audio_bytes(audio_bytes: bytes):
+    """
+    Load audio directly from WAV bytes, normalize it,
+    and convert it to a PyTorch tensor.
+    """
+
+    waveform, sample_rate = sf.read(
+        io.BytesIO(audio_bytes),
+        dtype="float32",
+    )
+
+    if waveform.ndim > 1:
+        waveform = np.mean(waveform, axis=1)
+
+    if sample_rate != TARGET_SAMPLE_RATE:
+        waveform = librosa.resample(
+            waveform,
+            orig_sr=sample_rate,
+            target_sr=TARGET_SAMPLE_RATE,
+        )
+
+    waveform = normalize_audio(waveform)
+
+    tensor = torch.tensor(
+        waveform,
+        dtype=torch.float32,
+    )
+
+    return tensor.unsqueeze(0)
