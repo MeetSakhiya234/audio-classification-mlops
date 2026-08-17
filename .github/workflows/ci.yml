@@ -1,0 +1,73 @@
+name: Audio Classification MLOps CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Compile Python source
+        run: |
+          python -m compileall app src configs pipelines steps scripts run_pipeline.py
+
+      - name: Build Docker image
+        run: |
+          docker build -t audio-classification-api:ci .
+
+      - name: Start API container
+        run: |
+          docker run -d \
+            --name audio-classification-api-ci \
+            -p 8000:8000 \
+            audio-classification-api:ci
+
+      - name: Wait for API
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8000/docs > /dev/null; then
+              echo "API is ready"
+              exit 0
+            fi
+            echo "Waiting for API..."
+            sleep 5
+          done
+
+          echo "API failed to become ready"
+          docker logs audio-classification-api-ci
+          exit 1
+
+      - name: Test FastAPI docs
+        run: |
+          curl -fsS http://localhost:8000/docs > /dev/null
+          echo "FastAPI /docs check passed"
+
+      - name: Test Prometheus metrics
+        run: |
+          curl -fsS http://localhost:8000/metrics > metrics.txt
+          grep -q "audio_api_requests_total" metrics.txt
+          echo "Prometheus /metrics check passed"
+
+      - name: Show container logs
+        if: always()
+        run: |
+          docker logs audio-classification-api-ci || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f audio-classification-api-ci || true
