@@ -123,3 +123,5 @@ Werkzeug==3.1.8
 xxhash==4.0.0
 yarl==1.24.5
 zipp==4.1.0
+python-multipart==0.0.32
+prometheus-client==0.23.1

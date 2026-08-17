@@ -1,3 +1,6 @@
+from prometheus_client import Counter, Histogram, generate_latest
+from fastapi.responses import Response
+
 import io
 import time
 from contextlib import asynccontextmanager
@@ -11,6 +14,28 @@ from src.audio_classifier.preprocessing import prepare_audio_bytes
 
 
 MODEL = None
+
+REQUEST_COUNT = Counter(
+    "audio_api_requests_total",
+    "Total number of API requests",
+    ["endpoint"],
+)
+
+PREDICTION_COUNT = Counter(
+    "audio_predictions_total",
+    "Total number of audio predictions",
+    ["predicted_class"],
+)
+
+PREDICTION_ERRORS = Counter(
+    "audio_prediction_errors_total",
+    "Total number of prediction errors",
+)
+
+INFERENCE_LATENCY = Histogram(
+    "audio_inference_latency_seconds",
+    "Audio model inference latency in seconds",
+)
 
 
 @asynccontextmanager
@@ -60,11 +85,20 @@ def health():
         "model_loaded": MODEL is not None,
     }
 
+@app.get("/metrics")
+def metrics():
+    return Response(
+        content=generate_latest(),
+        media_type="text/plain",
+    )
 
 @app.post("/predict")
 async def predict_audio(
     file: UploadFile = File(...),
 ):
+    REQUEST_COUNT.labels(
+        endpoint="/predict"
+    ).inc()
     global MODEL
 
     if MODEL is None:
@@ -149,6 +183,8 @@ async def predict_audio(
         )
 
     except Exception as exc:
+        PREDICTION_ERRORS.inc()
+
         raise HTTPException(
             status_code=500,
             detail=f"Audio inference failed: {exc}",
@@ -158,6 +194,14 @@ async def predict_audio(
         time.perf_counter()
         - start_time
     )
+
+    INFERENCE_LATENCY.observe(
+        inference_time
+    )
+
+    PREDICTION_COUNT.labels(
+        predicted_class=CLASS_NAMES[predicted_class]
+    ).inc()
 
     predicted_label = CLASS_NAMES[
         predicted_class

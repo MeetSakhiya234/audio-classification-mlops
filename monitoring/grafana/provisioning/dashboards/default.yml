@@ -1,0 +1,14 @@
+apiVersion: 1
+
+providers:
+  - name: audio-classification
+    orgId: 1
+    folder: ""
+    folderUid: ""
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
