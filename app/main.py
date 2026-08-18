@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 import soundfile as sf
 from fastapi import FastAPI, File, HTTPException, UploadFile
 
-from src.audio_classifier.data import CLASS_NAMES
+from src.audio_classifier.labels import CLASS_NAMES
 from src.audio_classifier.model import load_model, predict
 from src.audio_classifier.preprocessing import prepare_audio_bytes
 
