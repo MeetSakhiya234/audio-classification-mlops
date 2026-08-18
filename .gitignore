@@ -54,3 +54,7 @@ coverage.xml
 *.flac
 .zen/
 wav2vec2_quantized_state.pt
+
+# Keep deployment ONNX model
+!models/
+!models/wav2vec2_int8_linear.onnx

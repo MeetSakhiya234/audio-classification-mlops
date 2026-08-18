@@ -4,24 +4,21 @@ WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV HF_HOME=/root/.cache/huggingface
 
 RUN apt-get update && apt-get install -y \
-    build-essential \
     libsndfile1 \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY requirements-api.txt .
 
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir \
-       --extra-index-url https://download.pytorch.org/whl/cpu \
-       -r requirements.txt
+    && pip install --no-cache-dir -r requirements-api.txt
 
 COPY src/ ./src/
 COPY app/ ./app/
 COPY configs/ ./configs/
+COPY models/ ./models/
 
 EXPOSE 8000
 

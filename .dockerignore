@@ -10,7 +10,6 @@ __pycache__/
 
 mlflow.db
 mlruns/
-models/
 reports/
 sample.wav
 
