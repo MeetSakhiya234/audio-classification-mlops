@@ -1,22 +1,29 @@
 from pathlib import Path
+import io
 
 import librosa
 import numpy as np
-import torch
+import soundfile as sf
 
 
 TARGET_SAMPLE_RATE = 16000
 
 
-def load_audio(audio_path: str, sample_rate: int = TARGET_SAMPLE_RATE):
+def load_audio(
+    audio_path: str,
+    sample_rate: int = TARGET_SAMPLE_RATE,
+):
     """
-    Load an audio file and convert it to mono at the target sample rate.
+    Load an audio file and convert it to mono
+    at the target sample rate.
     """
 
     path = Path(audio_path)
 
     if not path.exists():
-        raise FileNotFoundError(f"Audio file not found: {path}")
+        raise FileNotFoundError(
+            f"Audio file not found: {path}"
+        )
 
     waveform, _ = librosa.load(
         path,
@@ -24,17 +31,19 @@ def load_audio(audio_path: str, sample_rate: int = TARGET_SAMPLE_RATE):
         mono=True,
     )
 
-    waveform = waveform.astype(np.float32)
-
-    return waveform
+    return waveform.astype(np.float32)
 
 
-def normalize_audio(waveform: np.ndarray) -> np.ndarray:
+def normalize_audio(
+    waveform: np.ndarray,
+) -> np.ndarray:
     """
     Normalize waveform amplitude.
     """
 
-    max_value = np.max(np.abs(waveform))
+    max_value = np.max(
+        np.abs(waveform)
+    )
 
     if max_value > 0:
         waveform = waveform / max_value
@@ -44,29 +53,26 @@ def normalize_audio(waveform: np.ndarray) -> np.ndarray:
 
 def prepare_audio(audio_path: str):
     """
-    Load, normalize, and convert audio to a PyTorch tensor.
+    Load, normalize, and prepare audio
+    as a NumPy array for ONNX Runtime.
     """
 
     waveform = load_audio(audio_path)
 
     waveform = normalize_audio(waveform)
 
-    tensor = torch.tensor(
+    return np.expand_dims(
         waveform,
-        dtype=torch.float32,
-    )
-
-    return tensor.unsqueeze(0)
+        axis=0,
+    ).astype(np.float32)
 
 
-import io
-import soundfile as sf
-
-
-def prepare_audio_bytes(audio_bytes: bytes):
+def prepare_audio_bytes(
+    audio_bytes: bytes,
+):
     """
-    Load audio directly from WAV bytes, normalize it,
-    and convert it to a PyTorch tensor.
+    Load audio directly from bytes, normalize it,
+    and prepare it as a NumPy array for ONNX Runtime.
     """
 
     waveform, sample_rate = sf.read(
@@ -75,7 +81,10 @@ def prepare_audio_bytes(audio_bytes: bytes):
     )
 
     if waveform.ndim > 1:
-        waveform = np.mean(waveform, axis=1)
+        waveform = np.mean(
+            waveform,
+            axis=1,
+        )
 
     if sample_rate != TARGET_SAMPLE_RATE:
         waveform = librosa.resample(
@@ -86,9 +95,7 @@ def prepare_audio_bytes(audio_bytes: bytes):
 
     waveform = normalize_audio(waveform)
 
-    tensor = torch.tensor(
+    return np.expand_dims(
         waveform,
-        dtype=torch.float32,
-    )
-
-    return tensor.unsqueeze(0)
+        axis=0,
+    ).astype(np.float32)
